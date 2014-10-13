@@ -1,4 +1,4 @@
-# txtblocks - Helper for network device CLI screen scarping adventures
+# txtblocks - Helper for network device CLI screen scraping adventures
 
 I'll try to write a parser which helps me through my Cisco CLI screen scraping adventures.
 This is just one of my toy projects.
@@ -6,7 +6,7 @@ This is just one of my toy projects.
 If you are looking for a good parser you should give [textfsm](https://code.google.com/p/textfsm/) a try.
 
 
-## Usage Examplse
+## Usage Examples
 
 
 Some text from "show cdp neigh detail"
