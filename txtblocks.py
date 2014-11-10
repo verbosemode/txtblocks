@@ -42,9 +42,8 @@ class TextLine(object):
         self._name = name
         self._regex = re.compile(regex)
 
-
     def parse(self, text):
-        """Parses a text string and returns all regular expression matches as dictionary"""
+        """Parses a text string and returns all regular expression matches as duple (element name, dictionary with matches)"""
 
         match = self._regex.match(text)
 
@@ -54,9 +53,9 @@ class TextLine(object):
             if len(match.groups()) > 0 and len(groupdict) == 0:
                 raise Exception("Some regexes in {} have no name. Use ?P<myregexname>".format(self._name))
             else:
-                return groupdict
+                return (self.get_name(), groupdict)
         else: 
-            return {}
+            return (self.get_name(), {})
 
     def get_name(self):
         return self._name
@@ -105,20 +104,21 @@ class TextBlock(object):
         """
         text - String contains of one or more lines which are separated by a new line character
 
-        returns a dictionary where keys are TextLine instance names
+        returns a tuple (block name, dict-text-regexname-matches)
 
         """
         data = {}
 
         for line in text.split('\n'):
             for textelement in self._textelements:
-                match = textelement.parse(line)
+                textelementname, match = textelement.parse(line)
 
                 if len(match) > 0:
-                    data[textelement.get_name()] = match
+                    for e in match:
+                        data[e] = match[e]
                     continue
 
-        return data
+        return (self.get_name(), data)
 
     def get_name(self):
         return self._name
@@ -156,14 +156,11 @@ class BlockParser(Parser):
             if currblock:
                 if currblock.matches_start_pattern(line) and inblock:
                     buffer += line
-                   
-                    if not currblock.get_name() in blocks:
-                        blocks[currblock.get_name()] = []
 
-                    result = currblock.parse(buffer)
+                    blockname, match = currblock.parse(buffer)
 
                     if len(result) > 0:
-                        blocks[currblock.get_name()].append(result)
+                        blocks[currblock.get_name()] = match
 
                     buffer = ""
                     currblock = None
@@ -185,10 +182,10 @@ class BlockParser(Parser):
             if not currblock.get_name() in blocks:
                 blocks[currblock.get_name()] = []
 
-            result = currblock.parse(buffer)
+            blockanme, match = currblock.parse(buffer)
 
-            if len(result) > 0:
-                blocks[currblock.get_name()].append(result)
+            if len(match) > 0:
+                blocks[currblock.get_name()] = match
             buffer = ""
             currblock = None
             inblock = False
