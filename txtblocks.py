@@ -28,6 +28,30 @@ import re
 import pprint
 
 
+class TextElement(object):
+    def __init__(self, name, pattern):
+        self._name = name
+        self._pattern = pattern
+
+    def parse(self, text):
+        """Parses a text string and returns all regular expression matches as tuple (element name, dictionary with matches)"""
+
+        match = re.search(self._pattern, text)
+
+        if match:
+            groupdict = match.groupdict()
+
+            if len(match.groups()) > 0 and len(groupdict) == 0:
+                raise Exception("Some regexes in {} have no name. Use ?P<myregexname>".format(self._name))
+            else:
+                return (self.get_name(), groupdict)
+        else: 
+            return (self.get_name(), {})
+
+    def get_name(self):
+        return self._name
+
+
 class TextLine(object):
     """Object for parsing a line of text ;-)
     
@@ -43,7 +67,7 @@ class TextLine(object):
         self._regex = re.compile(regex)
 
     def parse(self, text):
-        """Parses a text string and returns all regular expression matches as duple (element name, dictionary with matches)"""
+        """Parses a text string and returns all regular expression matches as tuple (element name, dictionary with matches)"""
 
         match = self._regex.match(text)
 
@@ -64,12 +88,13 @@ class TextLine(object):
 class TextBlock(object):
     """Container for TextLine instances"""
 
-    def __init__(self, name, textelements, startregex, endregex=''):
+    def __init__(self, name, textelements, startregex, endregex='', oneliner=False):
         """
         name - Text block name
         textelements - List of TextLine instances
         startregex - String containing a regular expression that marks the beginning of a text block
         endregex (optional) - Marks end of a text block
+        oneliner (optional) - If True, all whitespaces will be replaced with a single space
 
         If endregex is not defined, the text block will end at EOF or when the startregex pattern
         is seen again.
@@ -78,6 +103,7 @@ class TextBlock(object):
         self._name = name
         self._textelements = textelements
         self._startregex = re.compile(startregex)
+        self._oneliner = oneliner
 
         if len(endregex) > 0:
             self._endregex = re.compile(endregex)
@@ -91,7 +117,7 @@ class TextBlock(object):
             return True
         else:
             return False
-   
+
     def matches_end_pattern(self, text):
         match = self._endregex.match(text)
 
@@ -108,6 +134,9 @@ class TextBlock(object):
 
         """
         data = {}
+
+        if self._oneliner:
+            text = re.sub('\s+', ' ', text.strip())
 
         for line in text.split('\n'):
             for textelement in self._textelements:

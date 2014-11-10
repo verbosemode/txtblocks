@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import unittest
-from txtblocks import TextLine, TextBlock, BlockParser
+from txtblocks import TextElement, TextLine, TextBlock, BlockParser
 
 
 class TestTextLine(unittest.TestCase):
@@ -46,6 +46,17 @@ class TestTextBlock(unittest.TestCase):
         txtblock = TextBlock('foo', [deviceid], '^it all starts here')
 
         result = ('foo', {'deviceid': 'switch1.lab.example.com'})
+
+        self.assertEqual(txtblock.parse(text), result)
+
+    def test_parse_oneliner(self):
+        text = "it all starts here\nPlatform: foo,\nDevice ID: switch1.lab.example.com\nbar"
+
+        platform = TextElement('platform', 'Platform:\s(?P<platform>[\w+\-]+),')
+        deviceid = TextElement('deviceid', 'Device ID: (?P<deviceid>[\w\.]+)')
+        txtblock = TextBlock('foo', [platform, deviceid], '^it all starts here', oneliner=True)
+
+        result = ('foo', {'platform': 'foo', 'deviceid': 'switch1.lab.example.com'})
 
         self.assertEqual(txtblock.parse(text), result)
 
