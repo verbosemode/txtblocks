@@ -28,8 +28,15 @@ import re
 import pprint
 
 
+__VERSION__ = '3'
+
+
 class TextElement(object):
-    def __init__(self, name, pattern):
+    def __init__(self, pattern, name=''):
+        """
+        :param pattern: String - Regular expression
+        :param name: String - Optional. Give the TextElement a name for better debugging
+        """
         self._name = name
         self._pattern = pattern
 
@@ -44,45 +51,39 @@ class TextElement(object):
             if len(match.groups()) > 0 and len(groupdict) == 0:
                 raise Exception("Some regexes in {} have no name. Use ?P<myregexname>".format(self._name))
             else:
-                return (self.get_name(), groupdict)
+                return (groupdict, self.get_name())
         else: 
-            return (self.get_name(), {})
+            return ({}, self.get_name())
 
     def get_name(self):
         return self._name
 
 
-class TextLine(object):
-    """Object for parsing a line of text ;-)
-    
-    >>> deviceid = TextLine('deviceid', '^Device ID: (?P<deviceid>.+)$')
-    >>> deviceid.parse('Device ID: switch1.lab.example.com')
-    {'deviceid': 'switch1.lab.example.com'}
-    >>> deviceid.parse('Some random string')
-    {}
-    """
+class TextLine(TextElement):
+    """Object for parsing a line of text ;-)"""
 
-    def __init__(self, name, regex):
-        self._name = name
-        self._regex = re.compile(regex)
+    def __init__(self, pattern, name=''):
+        """
+        :param pattern: String - Regular expression
+        :param name: String - Optional. Give the TextElement a name for better debugging
+        """
+        TextElement.__init__(self, pattern, name)
+        self._pattern = re.compile(pattern)
 
     def parse(self, text):
         """Parses a text string and returns all regular expression matches as tuple (element name, dictionary with matches)"""
 
-        match = self._regex.match(text)
+        match = self._pattern.match(text)
 
         if match:
             groupdict = match.groupdict()
 
             if len(match.groups()) > 0 and len(groupdict) == 0:
-                raise Exception("Some regexes in {} have no name. Use ?P<myregexname>".format(self._name))
+                raise Exception("Some patternes in {} have no name. Use ?P<mypatternname>".format(self._name))
             else:
-                return (self.get_name(), groupdict)
+                return (groupdict, self.get_name())
         else: 
-            return (self.get_name(), {})
-
-    def get_name(self):
-        return self._name
+            return ({}, self.get_name())
 
 
 class TextBlock(object):
@@ -140,7 +141,7 @@ class TextBlock(object):
 
         for line in text.split('\n'):
             for textelement in self._textelements:
-                textelementname, match = textelement.parse(line)
+                match, textelementname = textelement.parse(line)
 
                 if len(match) > 0:
                     for e in match:
@@ -154,15 +155,14 @@ class TextBlock(object):
 
 
 class Parser(object):
-    def __init__(self, inputstr):
-        self._inputstr = inputstr
+    def __init__(self):
         self._linenum = 0
 
-    def set_inputstr(self, inputstr):
-        self._inputstr = inputstr
+    def _set_input_text(self, text):
+        self._text = text
 
     def read_lines(self, strip=True):
-        for l in self._inputstr.split('\n'):
+        for l in self._text.split('\n'):
             if strip:
                 l = l.strip()
             self._linenum += 1
@@ -170,53 +170,57 @@ class Parser(object):
 
 
 class BlockParser(Parser):
-    def __init__(self, text, textblocks):
-        Parser.__init__(self, text)
+    def __init__(self, textblocks):
+        Parser.__init__(self)
         self._textblocks = textblocks
 
+    def find_textblock(self, line):
+        for textblock in self._textblocks:
+            if textblock.matches_start_pattern(line):
+                return textblock
 
-    def parse(self):
-        buffer = ""
+        return None
+
+    def parse(self, text):
+        textbuffer = ""
         blocks = {}
-        inblock = False
         currblock = None
 
+        self._set_input_text(text)
+
+
+        # Code duplication, somewhat ugly, need to #FIXIT someday
         for line in self.read_lines():
-            if currblock:
-                if currblock.matches_start_pattern(line) and inblock:
-                    buffer += line
+            textblock = self.find_textblock(line)
 
-                    blockname, match = currblock.parse(buffer)
+            if textblock and currblock:
+                currblockname = currblock.get_name()
+                blockname, match = currblock.parse(textbuffer)
 
-                    if len(result) > 0:
-                        blocks[currblock.get_name()] = match
+                # Save data if any of the patterns in the TextBlock did match
+                if len(match) > 0:
+                    if not currblockname in blocks:
+                        blocks[currblockname] = [match]
+                    else:
+                        blocks[currblockname].append(match)
 
-                    buffer = ""
-                    currblock = None
-                    inblock = False
-                    continue
-                elif inblock:
-                    buffer += line + "\n"
-            else:
-                for textblock in self._textblocks:
-                    if textblock.matches_start_pattern(line):
-                        currblock = textblock
-                        buffer += line + "\n"
-                        inblock = True
-                        break
+                currblock = textblock
+                textbuffer = line + '\n'
+            elif textblock:
+                currblock = textblock
+                textbuffer += line + '\n'
+            elif currblock:
+                textbuffer += line + '\n'
 
+        if len(textbuffer) > 0:
+            currblockname = currblock.get_name()
+            blockname, match = currblock.parse(textbuffer)
 
-        if inblock:
-            buffer += line
-            if not currblock.get_name() in blocks:
-                blocks[currblock.get_name()] = []
-
-            blockanme, match = currblock.parse(buffer)
-
+            # Save data if any of the patterns in the TextBlock did match
             if len(match) > 0:
-                blocks[currblock.get_name()] = match
-            buffer = ""
-            currblock = None
-            inblock = False
+                if not currblockname in blocks:
+                    blocks[currblockname] = [match]
+                else:
+                    blocks[currblockname].append(match)
 
         return blocks

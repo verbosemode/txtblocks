@@ -6,19 +6,19 @@ from txtblocks import TextElement, TextLine, TextBlock, BlockParser
 
 class TestTextLine(unittest.TestCase):
     def test_parser_match(self):
-        deviceid = TextLine('deviceid', '^Device ID: (?P<deviceid>.+)$')
+        deviceid = TextLine('^Device ID: (?P<deviceid>.+)$')
         match = deviceid.parse('Device ID: switch1.lab.example.com')
-        result = ('deviceid', {'deviceid': 'switch1.lab.example.com'})
+        result = ({'deviceid': 'switch1.lab.example.com'}, '')
         self.assertEqual(match, result)
 
     def test_parser_no_match(self):
-        deviceid = TextLine('deviceid', '^Device ID: (?P<deviceid>.+)$')
+        deviceid = TextLine('^Device ID: (?P<deviceid>.+)$')
         match = deviceid.parse('some random string')
-        result = ('deviceid', {})
+        result = ({}, '')
         self.assertEqual(match, result)
 
     def test_get_name(self):
-        deviceid = TextLine('deviceid', '^Device ID: (?P<deviceid>.+)$')
+        deviceid = TextLine('^Device ID: (?P<deviceid>.+)$', name='deviceid')
         self.assertEqual(deviceid.get_name(), 'deviceid')
 
 
@@ -42,7 +42,7 @@ class TestTextBlock(unittest.TestCase):
     def test_parse(self):
         text = "it all starts here\nfoo\nDevice ID: switch1.lab.example.com\nbar"
 
-        deviceid = TextLine('deviceid', '^Device ID: (?P<deviceid>.+)$')
+        deviceid = TextLine('^Device ID: (?P<deviceid>.+)$')
         txtblock = TextBlock('foo', [deviceid], '^it all starts here')
 
         result = ('foo', {'deviceid': 'switch1.lab.example.com'})
@@ -52,10 +52,11 @@ class TestTextBlock(unittest.TestCase):
     def test_parse_oneliner(self):
         text = "it all starts here\nPlatform: foo,\nDevice ID: switch1.lab.example.com\nbar"
 
-        platform = TextElement('platform', 'Platform:\s(?P<platform>[\w+\-]+),')
-        deviceid = TextElement('deviceid', 'Device ID: (?P<deviceid>[\w\.]+)')
+        platform = TextElement('Platform:\s(?P<platform>[\w+\-]+),')
+        deviceid = TextElement('Device ID: (?P<deviceid>[\w\.]+)')
         txtblock = TextBlock('foo', [platform, deviceid], '^it all starts here', oneliner=True)
 
+        result = ('foo', {'platform': 'foo', 'deviceid': 'switch1.lab.example.com'})
         result = ('foo', {'platform': 'foo', 'deviceid': 'switch1.lab.example.com'})
 
         self.assertEqual(txtblock.parse(text), result)
@@ -86,11 +87,16 @@ Management address(es):
   IP address: 192.168.0.2
 
 -------------------------"""
-        deviceid = TextLine('deviceid', '^Device ID: (?P<deviceid>.+)$')
-        txtblock = TextBlock('fooblock', [deviceid], '^Device ID:')
-        blockparser = BlockParser(text, [txtblock])
-        result = {'fooblock': {'deviceid': 'switch1.lab.example.com'}}
-        self.assertEqual(blockparser.parse(), result) 
+        deviceid = TextLine('^Device ID: (?P<deviceid>.+)$')
+        ifaces = TextLine('^Interface: (?P<ifremote>.+),\s+Port ID.+: (?P<iflocal>.+)$')
+        txtblock = TextBlock('fooblock', [deviceid, ifaces], '^Device ID:')
+        blockparser = BlockParser([txtblock])
+        result = {'fooblock': [{'deviceid': 'switch1.lab.example.com', 'ifremote': 'FastEthernet0/18',
+                                'iflocal': 'GigabitEthernet0/1'}]}
+        self.assertEqual(blockparser.parse(text), result) 
+
+    def test_parse_multiple_textlines(self):
+        pass
 
 if __name__ == '__main__':
     unittest.main()
