@@ -57,7 +57,6 @@ class TestTextBlock(unittest.TestCase):
         txtblock = TextBlock('foo', [platform, deviceid], '^it all starts here', oneliner=True)
 
         result = ('foo', {'platform': 'foo', 'deviceid': 'switch1.lab.example.com'})
-        result = ('foo', {'platform': 'foo', 'deviceid': 'switch1.lab.example.com'})
 
         self.assertEqual(txtblock.parse(text), result)
 
