@@ -3,6 +3,10 @@
 I'll try to write a parser which helps me through my Cisco CLI screen scraping adventures.
 This is just one of my toy projects.
 
+The parser can match each line of a text block against a regular expression or treat the
+entire block as just a single string. The latter means, all new lines are removed and
+multiple whitespace characters are replaced by a single space.
+
 If you are looking for a good parser you should give [textfsm](https://code.google.com/p/textfsm/) a try.
 
 
@@ -34,17 +38,22 @@ Some text from "show cdp neigh detail"
 	  IP address: 192.168.0.2
 
 	-------------------------
-
-
+....
 
 ```python
 # Parse a single line within a text block
-deviceid = TextLine('deviceid', '^Device ID: (?P<deviceid>.+)$')
+deviceid = TextLine('^Device ID: (?P<deviceid>.+)$')
+ifaces = TextLine('^Interface: (?P<ifremote>.+),\s+Port ID.+: (?P<iflocal>.+)$')
 # cdpentry -> Name of the text block
 # [deviceid, ...] -> TextLine elements within the TextBlock
-# Last parameter defines how the start of a text block looks like
-txtblock = TextBlock('cdpentry', [deviceid], '^Device ID:')
-blockparser = BlockParser(text, [txtblock])
+# Last parameter defines how the start of a text block looks like.
+txtblock = TextBlock('cdpentry', [deviceid, ifaces], '^Device ID:')
+blockparser = BlockParser([txtblock])
+blockparser.parse(text)
+
+# Result
+{'cdpentry': [{'deviceid': 'switch1.lab.example.com', 'ifremote': 'FastEthernet0/18', 'iflocal': 'GigabitEthernet0/1'},
+	      {'deviceid': 'switch2.lab.example.com', 'ifremote': 'FastEthernet0/23', 'iflocal': 'GigabitEthernet0/2'}]}
 ```
 
 TODO Add support for YAML config files to setup parsers
