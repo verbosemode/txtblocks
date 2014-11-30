@@ -23,9 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import sys
 import re
-import pprint
 
 
 __VERSION__ = '3.0'
@@ -35,13 +33,15 @@ class TextElement(object):
     def __init__(self, pattern, name=''):
         """
         :param pattern: String - Regular expression
-        :param name: String - Optional. Give the TextElement a name for better debugging
+        :param name: String - Optional. Give the TextElement a name for
+                     better debugging
         """
         self._name = name
         self._pattern = pattern
 
     def parse(self, text):
-        """Parses a text string and returns all regular expression matches as tuple (element name, dictionary with matches)"""
+        """Parses a text string and returns all regular expression matches as
+           tuple (element name, dictionary with matches)"""
 
         match = re.search(self._pattern, text)
 
@@ -52,7 +52,7 @@ class TextElement(object):
                 raise Exception("Some regexes in {} have no name. Use ?P<myregexname>".format(self._name))
             else:
                 return (groupdict, self.get_name())
-        else: 
+        else:
             return ({}, self.get_name())
 
     def get_name(self):
@@ -65,13 +65,15 @@ class TextLine(TextElement):
     def __init__(self, pattern, name=''):
         """
         :param pattern: String - Regular expression
-        :param name: String - Optional. Give the TextElement a name for better debugging
+        :param name: String - Optional. Give the TextElement a name for
+                     better debugging
         """
         TextElement.__init__(self, pattern, name)
         self._pattern = re.compile(pattern)
 
     def parse(self, text):
-        """Parses a text string and returns all regular expression matches as tuple (element name, dictionary with matches)"""
+        """Parses a text string and returns all regular expression matches as
+           tuple (element name, dictionary with matches)"""
 
         match = self._pattern.match(text)
 
@@ -82,23 +84,26 @@ class TextLine(TextElement):
                 raise Exception("Some patternes in {} have no name. Use ?P<mypatternname>".format(self._name))
             else:
                 return (groupdict, self.get_name())
-        else: 
+        else:
             return ({}, self.get_name())
 
 
 class TextBlock(object):
     """Container for TextLine instances"""
 
-    def __init__(self, name, textelements, startregex, endregex='', oneliner=False):
+    def __init__(self, name, textelements, startregex, endregex='',
+                 oneliner=False):
         """
         name - Text block name
         textelements - List of TextLine instances
-        startregex - String containing a regular expression that marks the beginning of a text block
+        startregex - String containing a regular expression that marks the
+                     beginning of a text block
         endregex (optional) - Marks end of a text block
-        oneliner (optional) - If True, all whitespaces will be replaced with a single space
+        oneliner (optional) - If True, all whitespaces will be replaced with
+                              a single space
 
-        If endregex is not defined, the text block will end at EOF or when the startregex pattern
-        is seen again.
+        If endregex is not defined, the text block will end at EOF or when the
+        startregex pattern is seen again.
         """
 
         self._name = name
@@ -129,7 +134,8 @@ class TextBlock(object):
 
     def parse(self, text):
         """
-        text - String contains of one or more lines which are separated by a new line character
+        text - String contains of one or more lines which are separated by a
+               new line character
 
         returns a tuple (block name, dict-text-regexname-matches)
 
@@ -157,16 +163,17 @@ class TextBlock(object):
 class Parser(object):
     def __init__(self):
         self._linenum = 0
+        self._text = ''
 
     def _set_input_text(self, text):
         self._text = text
 
     def read_lines(self, strip=True):
-        for l in self._text.split('\n'):
+        for line in self._text.split('\n'):
             if strip:
-                l = l.strip()
+                line = line.strip()
             self._linenum += 1
-            yield l
+            yield line
 
 
 class BlockParser(Parser):
@@ -188,7 +195,6 @@ class BlockParser(Parser):
 
         self._set_input_text(text)
 
-
         # Code duplication, somewhat ugly, need to #FIXIT someday
         for line in self.read_lines():
             textblock = self.find_textblock(line)
@@ -199,7 +205,7 @@ class BlockParser(Parser):
 
                 # Save data if any of the patterns in the TextBlock did match
                 if len(match) > 0:
-                    if not currblockname in blocks:
+                    if currblockname not in blocks:
                         blocks[currblockname] = [match]
                     else:
                         blocks[currblockname].append(match)
@@ -218,7 +224,7 @@ class BlockParser(Parser):
 
             # Save data if any of the patterns in the TextBlock did match
             if len(match) > 0:
-                if not currblockname in blocks:
+                if currblockname not in blocks:
                     blocks[currblockname] = [match]
                 else:
                     blocks[currblockname].append(match)
