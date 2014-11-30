@@ -28,7 +28,7 @@ import re
 import pprint
 
 
-__VERSION__ = '3'
+__VERSION__ = '3.0'
 
 
 class TextElement(object):
