@@ -1,4 +1,6 @@
-# txtblocks - Helper for network device CLI screen scraping adventures
+txtblocks - Parser for screen scraping CLI output from network devices
+======================================================================
+
 
 I'll try to write a parser which helps me through my Cisco CLI screen scraping adventures.
 This is just one of my toy projects.
@@ -7,13 +9,14 @@ The parser can match each line of a text block against a regular expression or t
 entire block as just a single string. The latter means, all new lines are removed and
 multiple whitespace characters are replaced by a single space.
 
-If you are looking for a good parser you should give [textfsm](https://code.google.com/p/textfsm/) a try.
+If you are looking for a good parser you should give `textfsm <https://code.google.com/p/textfsm/>`_ a try.
 
 
-## Usage Examples
+Usage Examples
+--------------
 
 
-Some text from "show cdp neigh detail"
+Some text from "show cdp neigh detail" ::
 
 	-------------------------
 	Device ID: switch1.lab.example.com
@@ -38,27 +41,31 @@ Some text from "show cdp neigh detail"
 	  IP address: 192.168.0.2
 
 	-------------------------
-....
+        ...
 
-```python
-# Parse a single line within a text block
-deviceid = TextLine('^Device ID: (?P<deviceid>.+)$')
-ifaces = TextLine('^Interface: (?P<ifremote>.+),\s+Port ID.+: (?P<iflocal>.+)$')
-# cdpentry -> Name of the text block
-# [deviceid, ...] -> TextLine elements within the TextBlock
-# Last parameter defines how the start of a text block looks like.
-txtblock = TextBlock('cdpentry', [deviceid, ifaces], '^Device ID:')
-blockparser = BlockParser([txtblock])
-blockparser.parse(text)
 
-# Result
-{'cdpentry': [{'deviceid': 'switch1.lab.example.com', 'ifremote': 'FastEthernet0/18', 'iflocal': 'GigabitEthernet0/1'},
-	      {'deviceid': 'switch2.lab.example.com', 'ifremote': 'FastEthernet0/23', 'iflocal': 'GigabitEthernet0/2'}]}
-```
+.. code-block:: python
+
+        # Parse a single line within a text block
+        deviceid = TextLine('^Device ID: (?P<deviceid>.+)$')
+        ifaces = TextLine('^Interface: (?P<ifremote>.+),\s+Port ID.+: (?P<iflocal>.+)$')
+        # cdpentry -> Name of the text block
+        # [deviceid, ...] -> TextLine elements within the TextBlock
+        # Last parameter defines how the start of a text block looks like.
+        txtblock = TextBlock('cdpentry', [deviceid, ifaces], '^Device ID:')
+        blockparser = BlockParser([txtblock])
+        blockparser.parse(text)
+
+        # Result
+        {'cdpentry': [{'deviceid': 'switch1.lab.example.com', 'ifremote': 'FastEthernet0/18', 'iflocal': 'GigabitEthernet0/1'},
+                      {'deviceid': 'switch2.lab.example.com', 'ifremote': 'FastEthernet0/23', 'iflocal': 'GigabitEthernet0/2'}]}
+
 
 TODO Add support for YAML config files to setup parsers
 
-## Feedback
+Feedback
+--------
+
 
 Bug reports, patches and ideas are welcome.
 
