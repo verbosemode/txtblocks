@@ -63,6 +63,16 @@ Some text from "show cdp neigh detail" ::
 
 TODO Add support for YAML config files to setup parsers
 
+
+How to run the tests?
+---------------------
+
+::
+
+        python txtblocks/tests/test_txtblocks.py
+        python3 txtblocks/tests/test_txtblocks.py
+
+
 Feedback
 --------
 
