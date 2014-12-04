@@ -26,9 +26,6 @@
 import re
 
 
-__VERSION__ = '3.0'
-
-
 class TextElement(object):
     def __init__(self, pattern, name=''):
         """
