@@ -10,18 +10,14 @@ class TestTextLine(unittest.TestCase):
     def test_parser_match(self):
         deviceid = TextLine('^Device ID: (?P<deviceid>.+)$')
         match = deviceid.parse('Device ID: switch1.lab.example.com')
-        result = ({'deviceid': 'switch1.lab.example.com'}, '')
+        result = {'deviceid': 'switch1.lab.example.com'}
         self.assertEqual(match, result)
 
     def test_parser_no_match(self):
         deviceid = TextLine('^Device ID: (?P<deviceid>.+)$')
         match = deviceid.parse('some random string')
-        result = ({}, '')
+        result = {}
         self.assertEqual(match, result)
-
-    def test_get_name(self):
-        deviceid = TextLine('^Device ID: (?P<deviceid>.+)$', name='deviceid')
-        self.assertEqual(deviceid.get_name(), 'deviceid')
 
 
 class TestTextBlock(unittest.TestCase):
@@ -47,7 +43,7 @@ class TestTextBlock(unittest.TestCase):
         deviceid = TextLine('^Device ID: (?P<deviceid>.+)$')
         txtblock = TextBlock('foo', [deviceid], '^it all starts here')
 
-        result = ('foo', {'deviceid': 'switch1.lab.example.com'})
+        result = {'deviceid': 'switch1.lab.example.com'}
 
         self.assertEqual(txtblock.parse(text), result)
 
@@ -58,7 +54,7 @@ class TestTextBlock(unittest.TestCase):
         deviceid = TextElement('Device ID: (?P<deviceid>[\w\.]+)')
         txtblock = TextBlock('foo', [platform, deviceid], '^it all starts here', oneliner=True)
 
-        result = ('foo', {'platform': 'foo', 'deviceid': 'switch1.lab.example.com'})
+        result = {'platform': 'foo', 'deviceid': 'switch1.lab.example.com'}
 
         self.assertEqual(txtblock.parse(text), result)
 

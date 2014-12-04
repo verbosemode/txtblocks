@@ -36,7 +36,7 @@ class TextElement(object):
         :param name: String - Optional. Give the TextElement a name for
                      better debugging
         """
-        self._name = name
+        self.name = name
         self._pattern = pattern
 
     def parse(self, text):
@@ -49,14 +49,11 @@ class TextElement(object):
             groupdict = match.groupdict()
 
             if len(match.groups()) > 0 and len(groupdict) == 0:
-                raise Exception("Some regexes in {} have no name. Use ?P<myregexname>".format(self._name))
+                raise Exception("Some regexes in {} have no name. Use ?P<myregexname>".format(self.name))
             else:
-                return (groupdict, self.get_name())
+                return groupdict
         else:
-            return ({}, self.get_name())
-
-    def get_name(self):
-        return self._name
+            return {}
 
 
 class TextLine(TextElement):
@@ -81,11 +78,11 @@ class TextLine(TextElement):
             groupdict = match.groupdict()
 
             if len(match.groups()) > 0 and len(groupdict) == 0:
-                raise Exception("Some patternes in {} have no name. Use ?P<mypatternname>".format(self._name))
+                raise Exception("Some patternes in {} have no name. Use ?P<mypatternname>".format(self.name))
             else:
-                return (groupdict, self.get_name())
+                return groupdict
         else:
-            return ({}, self.get_name())
+            return {}
 
 
 class TextBlock(object):
@@ -106,7 +103,7 @@ class TextBlock(object):
         startregex pattern is seen again.
         """
 
-        self._name = name
+        self.name = name
         self._textelements = textelements
         self._startregex = re.compile(startregex)
         self._oneliner = oneliner
@@ -147,17 +144,14 @@ class TextBlock(object):
 
         for line in text.split('\n'):
             for textelement in self._textelements:
-                match, textelementname = textelement.parse(line)
+                match = textelement.parse(line)
 
                 if len(match) > 0:
                     for e in match:
                         data[e] = match[e]
                     continue
 
-        return (self.get_name(), data)
-
-    def get_name(self):
-        return self._name
+        return data
 
 
 class Parser(object):
@@ -200,8 +194,8 @@ class BlockParser(Parser):
             textblock = self.find_textblock(line)
 
             if textblock and currblock:
-                currblockname = currblock.get_name()
-                blockname, match = currblock.parse(textbuffer)
+                currblockname = currblock.name
+                match = currblock.parse(textbuffer)
 
                 # Save data if any of the patterns in the TextBlock did match
                 if len(match) > 0:
@@ -219,8 +213,8 @@ class BlockParser(Parser):
                 textbuffer += line + '\n'
 
         if len(textbuffer) > 0:
-            currblockname = currblock.get_name()
-            blockname, match = currblock.parse(textbuffer)
+            currblockname = currblock.name
+            match = currblock.parse(textbuffer)
 
             # Save data if any of the patterns in the TextBlock did match
             if len(match) > 0:
