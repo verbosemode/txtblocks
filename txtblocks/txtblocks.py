@@ -24,9 +24,10 @@
 # THE SOFTWARE.
 
 import re
+from collections import defaultdict
 
 
-__VERSION__ = "0.3"
+__VERSION__ = "0.3.0"
 
 
 class TextElement(object):
@@ -134,7 +135,7 @@ class TextBlock(object):
         text - String contains of one or more lines which are separated by a
                new line character
 
-        returns a tuple (block name, dict-text-regexname-matches)
+        returns dict-text-regexname-matches
 
         """
         data = {}
@@ -146,7 +147,7 @@ class TextBlock(object):
             for textelement in self._textelements:
                 match = textelement.parse(line)
 
-                if len(match) > 0:
+                if match:
                     for e in match:
                         data[e] = match[e]
                     continue
@@ -184,7 +185,7 @@ class BlockParser(Parser):
 
     def parse(self, text):
         textbuffer = ""
-        blocks = {}
+        blocks = defaultdict(list)
         currblock = None
 
         self._set_input_text(text)
@@ -198,11 +199,8 @@ class BlockParser(Parser):
                 match = currblock.parse(textbuffer)
 
                 # Save data if any of the patterns in the TextBlock did match
-                if len(match) > 0:
-                    if currblockname not in blocks:
-                        blocks[currblockname] = [match]
-                    else:
-                        blocks[currblockname].append(match)
+                if match:
+                    blocks[currblock.name].append(match)
 
                 currblock = textblock
                 textbuffer = line + '\n'
@@ -217,10 +215,7 @@ class BlockParser(Parser):
             match = currblock.parse(textbuffer)
 
             # Save data if any of the patterns in the TextBlock did match
-            if len(match) > 0:
-                if currblockname not in blocks:
-                    blocks[currblockname] = [match]
-                else:
-                    blocks[currblockname].append(match)
+            if match:
+                blocks[currblock.name].append(match)
 
         return blocks
