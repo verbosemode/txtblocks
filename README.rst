@@ -73,6 +73,12 @@ How to run the tests?
         python3 txtblocks/tests/test_txtblocks.py
 
 
+Windows
+-------
+
+If you run the setup on Windows you'll need to have git installed. Pbr tries to figure out the version number via git. I'll need to fix this "soon".
+
+
 Feedback
 --------
 
