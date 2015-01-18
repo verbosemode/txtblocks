@@ -57,11 +57,36 @@ Some text from "show cdp neigh detail" ::
         blockparser.parse(text)
 
         # Result
-        {'cdpentry': [{'deviceid': 'switch1.lab.example.com', 'ifremote': 'FastEthernet0/18', 'iflocal': 'GigabitEthernet0/1'},
-                      {'deviceid': 'switch2.lab.example.com', 'ifremote': 'FastEthernet0/23', 'iflocal': 'GigabitEthernet0/2'}]}
+        {'cdpentry': [{'deviceid': ['switch1.lab.example.com'], 'ifremote': ['FastEthernet0/18'], 'iflocal': ['GigabitEthernet0/1']},
+                      {'deviceid': ['switch2.lab.example.com'], 'ifremote': ['FastEthernet0/23'], 'iflocal': ['GigabitEthernet0/2']}]}
 
 
-TODO Add support for YAML config files to setup parsers
+
+This is what the parser return data structure looks like at the moment
+
+.. code-block:: python
+
+        result = {
+            'block1': [],
+            'cdpneigh': [
+                         {
+                          'deviceid': ['switch1.lab.example.com'],
+                          'ifremote': ['FastEthernet0/18'],
+                          'iflocal': ['GigabitEthernet0/1']
+                          },
+                         {
+                          'deviceid': ['switch2.lab.example.com'],
+                          'ifremote': ['GigabitEthernet0/1'],
+                          'iflocal': ['FastEthernet0/18']
+                         }
+            ]
+        }
+
+
+TODO
+----
+
+Add support for YAML config files to setup parsers
 
 
 How to run the tests?
@@ -86,3 +111,17 @@ Feedback
 Bug reports, patches and ideas are welcome.
 
 Just send me an e-mail (jochenbartl@mailbox.org) or open an issue on GitHub
+
+
+
+
+
+
+
+
+
+
+
+
+
+

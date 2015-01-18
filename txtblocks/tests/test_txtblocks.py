@@ -2,6 +2,7 @@
 
 import unittest
 import sys
+from collections import defaultdict
 sys.path.append('txtblocks')
 from txtblocks import TextElement, TextLine, TextBlock, BlockParser
 
@@ -10,7 +11,7 @@ class TestTextLine(unittest.TestCase):
     def test_parser_match(self):
         deviceid = TextLine('^Device ID: (?P<deviceid>.+)$')
         match = deviceid.parse('Device ID: switch1.lab.example.com')
-        result = {'deviceid': 'switch1.lab.example.com'}
+        result = {'deviceid': ['switch1.lab.example.com']}
         self.assertEqual(match, result)
 
     def test_parser_no_match(self):
@@ -43,7 +44,8 @@ class TestTextBlock(unittest.TestCase):
         deviceid = TextLine('^Device ID: (?P<deviceid>.+)$')
         txtblock = TextBlock('foo', [deviceid], '^it all starts here')
 
-        result = {'deviceid': 'switch1.lab.example.com'}
+        result = defaultdict(list)
+        result['deviceid'] = ['switch1.lab.example.com']
 
         self.assertEqual(txtblock.parse(text), result)
 
@@ -54,7 +56,19 @@ class TestTextBlock(unittest.TestCase):
         deviceid = TextElement('Device ID: (?P<deviceid>[\w\.]+)')
         txtblock = TextBlock('foo', [platform, deviceid], '^it all starts here', oneliner=True)
 
-        result = {'platform': 'foo', 'deviceid': 'switch1.lab.example.com'}
+        result = {'platform': ['foo'], 'deviceid': ['switch1.lab.example.com']}
+
+        self.assertEqual(txtblock.parse(text), result)
+
+    def test_parse_oneliner_overlapping_matches(self):
+        text = "it all starts here\nPlatform: foo,\nDevice ID: switch1.lab.example.com\nbar\n" \
+               "Device ID: switch2.lab.example.com"
+
+        platform = TextElement('Platform:\s(?P<platform>[\w+\-]+),')
+        deviceid = TextElement('Device ID: (?P<deviceid>[\w\.]+)')
+        txtblock = TextBlock('foo', [platform, deviceid], '^it all starts here', oneliner=True)
+
+        result = {'platform': ['foo'], 'deviceid': ['switch1.lab.example.com','switch2.lab.example.com']}
 
         self.assertEqual(txtblock.parse(text), result)
 
@@ -88,8 +102,8 @@ Management address(es):
         ifaces = TextLine('^Interface: (?P<ifremote>.+),\s+Port ID.+: (?P<iflocal>.+)$')
         txtblock = TextBlock('fooblock', [deviceid, ifaces], '^Device ID:')
         blockparser = BlockParser([txtblock])
-        result = {'fooblock': [{'deviceid': 'switch1.lab.example.com', 'ifremote': 'FastEthernet0/18',
-                                'iflocal': 'GigabitEthernet0/1'}]}
+        result = {'fooblock': [{'deviceid': ['switch1.lab.example.com'], 'ifremote': ['FastEthernet0/18'],
+                                'iflocal': ['GigabitEthernet0/1']}]}
         self.assertEqual(blockparser.parse(text), result) 
 
     def test_parse_multiple_textlines(self):

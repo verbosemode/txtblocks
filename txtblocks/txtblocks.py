@@ -44,17 +44,18 @@ class TextElement(object):
         """Parses a text string and returns all regular expression matches as
            tuple (element name, dictionary with matches)"""
 
-        match = re.search(self._pattern, text)
+        d = defaultdict(list)
 
-        if match:
+        for match in re.finditer(self._pattern, text):
             groupdict = match.groupdict()
-
             if len(match.groups()) > 0 and len(groupdict) == 0:
                 raise Exception("Some regexes in {} have no name. Use ?P<myregexname>".format(self.name))
             else:
-                return groupdict
-        else:
-            return {}
+                # iteritems not available in Python3
+                for k, v in groupdict.items():
+                    d[k].append(v)
+
+        return d
 
 
 class TextLine(TextElement):
@@ -73,6 +74,8 @@ class TextLine(TextElement):
         """Parses a text string and returns all regular expression matches as
            tuple (element name, dictionary with matches)"""
 
+        d = defaultdict(list)
+
         match = self._pattern.match(text)
 
         if match:
@@ -81,9 +84,10 @@ class TextLine(TextElement):
             if len(match.groups()) > 0 and len(groupdict) == 0:
                 raise Exception("Some patternes in {} have no name. Use ?P<mypatternname>".format(self.name))
             else:
-                return groupdict
-        else:
-            return {}
+                for k, v in groupdict.items():
+                    d[k].append(v)
+        
+        return d
 
 
 class TextBlock(object):
