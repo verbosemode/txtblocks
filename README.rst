@@ -1,6 +1,12 @@
 txtblocks - Parser for screen scraping CLI output from network devices
 ======================================================================
 
+!!!WARNING!!! This parser is totally broken. I need to rewrite the whole thing one day, maybe :D
+
+Use `textfsm <https://code.google.com/p/textfsm/>`_  or `pyparsing <http://pyparsing.wikispaces.com/>`_ instead.
+
+
+
 
 I'll try to write a parser which helps me through my Cisco CLI screen scraping adventures.
 This is just one of my toy projects.
@@ -8,8 +14,6 @@ This is just one of my toy projects.
 The parser can match each line of a text block against a regular expression or treat the
 entire block as just a single string. The latter means, all new lines are removed and
 multiple whitespace characters are replaced by a single space.
-
-If you are looking for a good parser you should give `textfsm <https://code.google.com/p/textfsm/>`_ a try.
 
 
 Usage Examples
